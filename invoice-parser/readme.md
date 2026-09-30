@@ -15,8 +15,5 @@ n8n, [OpenAI / other AI model], Google Sheets, [Gmail / Google Drive]
 3. AI extracts structured data
 4. Data is appended as a new row in Google Sheets
 
-## Screenshot
-![Workflow](./screenshot.png)
-
 ## How to Use
 Import `workflow.json` into n8n, add your own credentials and replace the placeholders (`YOUR_SHEET_ID`, etc.).
