@@ -1,0 +1,256 @@
+{
+  "name": "Whatsapp Weather",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "id": "29ecadd7-1ea9-4f17-9d40-06b2af0d79e4",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "88e53554-cc00-4529-abc3-44ca31d34e0e",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        192
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "cRSh8IHf3zl3ewCt",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Use the following actual weather data:\n\n{{$json.weather_data}}\n\nRead the values inside weather_data and use them as the source of truth.\nGenerate the 10-field JSON requested in the System Message.",
+        "options": {
+          "systemMessage": "STYLE:\n\nWrite like a fun, energetic rapper talking directly to Zunaira.\n\nKeep every field short, punchy, natural, and playful.\nUse casual Gen-Z/rapper-style wording, but keep the advice useful and understandable.\n\nExamples of the vibe:\n- advice: \"33? Girl, hydrate before the heat starts cooking you. 💧\"\n- outfit: \"Light cotton fit. Keep it breezy, keep it clean. 😎\"\n- activity: \"Morning walk? Yes. Midday heat battle? Nah. 😂\"\n- carry: \"Water bottle + shades. Stay ready.\"\n- precaution: \"Don't let that sun roast you—avoid peak heat.\"\n- mission: \"YO ZUNAIRA, sun's flexing today—but YOU flex harder. 🔥\"\n\nDo NOT write a long paragraph.\nDo NOT explain the weather data.\nDo NOT mention that you are an AI.\nDo NOT use fake weather values.\n\nReturn exactly these 10 JSON fields:\ntemp\nrain_chance\nwind\ncondition\nadvice\noutfit\nactivity\ncarry\nprecaution\nmission\n\nIMPORTANT FORMAT RULES:\n\n- temp must contain ONLY the number. Example: \"33.2\"\n- rain_chance must contain ONLY the number. Example: \"0\"\n- wind must contain ONLY the number. Example: \"11.5\"\n\nDo NOT add °C, %, km/h, emojis, explanations, or extra words to these three fields.\n\nThe other fields can be fun, conversational, and rapper-style.\n\nThe output must contain ONLY valid JSON."
+        }
+      },
+      "id": "c953c93a-f132-453a-b612-e8066c4611fa",
+      "name": "create message",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        672,
+        0
+      ],
+      "retryOnFail": false,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "YOUR_PHONE_NUMBER",
+        "template": "whatsapp_weather_temp|en",
+        "components": {
+          "component": [
+            {
+              "bodyParameters": {
+                "parameter": [
+                  {
+                    "text": "={{ $json.temp }}"
+                  },
+                  {
+                    "text": "={{ $json.rain_chance }}"
+                  },
+                  {
+                    "text": "={{$json.wind}}"
+                  },
+                  {
+                    "text": "={{$json.condition}}"
+                  },
+                  {
+                    "text": "={{ $json.advice }}"
+                  },
+                  {
+                    "text": "={{ $json.outfit }}"
+                  },
+                  {
+                    "text": "={{ $json.activity }}"
+                  },
+                  {
+                    "text": "={{ $json.carry }}"
+                  },
+                  {
+                    "text": "={{ $json.precaution }}"
+                  },
+                  {
+                    "text": "={{ $json.mission }}"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "id": "e4606dc4-4a32-47fc-b7e7-60af338b5812",
+      "name": "send msg to whatsapp",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        1264,
+        0
+      ],
+      "webhookId": "YOUR_WEBHOOK_ID",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "YOUR_WHATSAPP_ID",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.open-meteo.com/v1/forecast?latitude=28.3069&longitude=70.1307&current=temperature_2m,precipitation,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code,wind_speed_10m&forecast_days=1&timezone=Asia%2FKarachi",
+        "options": {}
+      },
+      "id": "248d6a1f-9cb6-4e4f-8e26-26e1c1ab0cd3",
+      "name": "weather url",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  json: JSON.parse($json.output)\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "792d6b6d-358e-453a-8e4e-f10c9c93c955",
+      "name": "TO JSON1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4360d41d-693e-41e8-9126-2f4e935935f3",
+              "name": "weather_data",
+              "value": "={{ JSON.stringify({   temperature: $json.current.temperature_2m,   rain_probability: $json.hourly.precipitation_probability[0],   wind_speed: $json.current.wind_speed_10m,   precipitation: $json.current.precipitation,   weather_code: $json.current.weather_code,   time: $json.current.time }) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "aa0e55fc-b913-4321-b344-2612fd1a8ad7",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "weather url",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "create message",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create message": {
+      "main": [
+        [
+          {
+            "node": "TO JSON1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "weather url": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TO JSON1": {
+      "main": [
+        [
+          {
+            "node": "send msg to whatsapp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "create message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "c0ecacf9-38ab-4937-8ea0-bee316347a44",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9e4b58348d1018d3ccd7b213e2a4a50233553b7e20efb9cab855de7654982023"
+  },
+  "nodeGroups": [],
+  "id": "W0IOu7DiJrf05Ekl",
+  "tags": []
+}

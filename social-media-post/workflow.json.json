@@ -1,0 +1,514 @@
+{
+  "name": "Social Media Post",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "On Trigger",
+        "height": 208,
+        "width": 288,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        -48
+      ],
+      "id": "f9d031bf-07d7-49b7-b187-b015dcb7a466",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "formTitle": "Social Media Post Generator & Uploader",
+        "formDescription": "Fill out this form and youll have a full social media post ready to go in a minute.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Topic of Post",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Target Audience",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        -144,
+        0
+      ],
+      "id": "c9dd0572-9c5c-48dd-9936-e5589522828f",
+      "name": "Form Trigger",
+      "webhookId": "YOUR_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate a social media post on this topic:\n\nTopic: {{ $json['Topic of Post'] }}\n\nTarget Audience: {{ $json['Target Audience'] }}\n\nReturn ONLY valid JSON in this format:\n{\n  \"linkedin_caption\": \"professional tone, 100-150 words\",\n  \"facebook_caption\": \"casual, short, 2-3 lines\",\n  \"instagram_caption\": \"with emojis and 8-10 hashtags\",\n  \"image_prompt\": \"detailed English prompt for image generation\"\n}",
+        "options": {
+          "systemMessage": "You are a social media content expert.\nUse a different tone for each platform.\nRespond only with valid JSON. No extra text and no markdown backticks.\nBefore writing, use the Tavily tool to search for the latest facts about the topic. Use only verified information from the search results. Still return ONLY valid JSON."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        144,
+        0
+      ],
+      "id": "2ee473b6-2f4a-4f7c-9f44-2657242e8826",
+      "name": "Social Media Post generate"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        384,
+        224
+      ],
+      "id": "a2f3183a-38eb-4c22-99b9-f5b6cd3ace63",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_API_KEY_HERE"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"query\": \"{query}\",\n  \"max_results\": 5,\n  \"search_depth\": \"basic\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.5,
+      "position": [
+        128,
+        224
+      ],
+      "id": "c2ede855-b32f-4be6-b875-e7d280d17256",
+      "name": "Tavily"
+    },
+    {
+      "parameters": {
+        "content": "Social Media Post Generator and Image prompt",
+        "height": 464,
+        "width": 608
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        96,
+        -128
+      ],
+      "id": "9e111449-f110-4135-af2b-f219248b0897",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a senior art director and expert prompt engineer for AI image generators (Flux, DALL-E, Imagen, Midjourney style).\n\nYour job: read a social media post and write ONE highly detailed English image prompt that visually represents its core message.\n\nFollow these steps internally:\n1. Identify the post's main topic, key message, emotion, and target audience.\n2. Choose ONE clear visual concept (a single subject or scene, not a collage).\n3. Choose a style that fits the audience:\n   - Business / tech / finance: clean modern flat illustration or minimal 3D render\n   - Lifestyle / food / travel / products: realistic professional photography\n   - Education / awareness: friendly vector illustration or infographic-style scene without text\n4. Write the prompt using this structure, in one flowing paragraph:\n   [Main subject and action], [setting / background], [style and medium], [color palette with 2-3 specific colors], [lighting], [camera angle and lens if photo], [composition and focal point], [mood and atmosphere], [quality keywords]\n\nRules:\n\n- Do NOT include any text, letters, numbers, logos, watermarks, or captions in the image.\n- Avoid real people's faces, celebrities, and brand names.\n- If people are needed, describe them generically (e.g. \"a young professional working on a laptop\"), and prefer showing them from a natural angle with clear hands and normal anatomy.\n- Be concrete and visual. Avoid abstract words like \"innovative\" or \"amazing\"; describe what is actually seen.\n- Length: 80 to 120 words.\n- Return ONLY the final prompt. No explanation, no title, no quotes, no markdown.\n\nHere is the social media post:\n\n{{ $json.output }}\n\nWrite the image generation prompt now.",
+        "options": {
+          "systemMessage": "You are an expert visual designer and prompt engineer.\nRead the social media post and write one detailed English image prompt that visually represents it.\nInclude: main subject, style (e.g. modern flat illustration or realistic photo), color palette, lighting, composition, and mood.\nSquare 1:1 format, suitable for Instagram, Facebook and LinkedIn.\nDo NOT include any text, words, letters or logos inside the image.\nReturn only the prompt, no explanation."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "ba2ca9db-cd71-4e4c-b851-d0a9eee6ff5b",
+      "name": "Image prompt"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-image-1.5",
+          "mode": "list",
+          "cachedResultName": "GPT-IMAGE-1.5"
+        },
+        "prompt": "={{ $json.output }}",
+        "options": {
+          "quality": "medium",
+          "size": "1024x1024"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        832,
+        192
+      ],
+      "id": "8591222e-9686-42db-95eb-b779825e3252",
+      "name": "insta img",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.imgbb.com/1/upload?key=YOU_API_KEY",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "image",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1024,
+        192
+      ],
+      "id": "f3ad960e-19e1-4cb5-a384-e198033fd6ff",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "content": "Image generation for LI\n\n",
+        "height": 224,
+        "width": 336,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        816,
+        -128
+      ],
+      "id": "88c6a13a-fb89-408d-b148-db90d2cea723",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "Image generation for Insta",
+        "height": 224,
+        "width": 400,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        784,
+        144
+      ],
+      "id": "f0e611fb-b05a-4abd-9bd7-77c1ef86d1a7",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "person": "y8xEQiRt9z",
+        "text": "={{ JSON.parse($('Social Media Post generate').item.json.output).linkedin_caption }}",
+        "shareMediaCategory": "IMAGE",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        1328,
+        -80
+      ],
+      "id": "0402a3b1-1bdc-427c-b2a3-524a447386c5",
+      "name": "Linkedin post",
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "LINKEDIN_ID",
+          "name": "LinkedIn account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-image-1-mini"
+        },
+        "prompt": "={{ $json.output }}",
+        "options": {
+          "quality": "medium",
+          "size": "1536x1024"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        944,
+        -80
+      ],
+      "id": "1a695999-a521-4c3b-963b-138ecf0a3e32",
+      "name": "LI image",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.postpeer.dev/v1/posts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-access-key",
+              "value": "YOUR_ACCESS_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  content: JSON.parse($('Social Media Post generate').item.json.output).facebook_caption,\n  platforms: [ { platform: \"facebook\", accountId: \"6aba28a8f4c58f3c5793f008\" } ],\n  mediaItems: [ { type: \"image\", url: $json.data.url } ],\n  publishNow: true\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1328,
+        176
+      ],
+      "id": "bfb80e38-00a5-4ae2-8351-262c4ae940ad",
+      "name": "FaceBook Post"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.postpeer.dev/v1/posts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-access-key",
+              "value": "YOUR_ACCESS_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  content: JSON.parse($('Social Media Post generate').item.json.output).instagram_caption,\n  platforms: [ { platform: \"instagram\", accountId: \"6aba2900f4c58f3c5793f00a\" } ],\n  mediaItems: [ { type: \"image\", url: $json.data.url } ],\n  publishNow: true\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1328,
+        336
+      ],
+      "id": "2de458f2-c5e8-4ed4-b842-6c8330400f95",
+      "name": "insta post"
+    },
+    {
+      "parameters": {
+        "content": "Linkedin post",
+        "height": 208
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1264,
+        -128
+      ],
+      "id": "b89a7992-ed3b-46f0-96a4-bd48c95ef49d",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "Facebook & Insta posts",
+        "height": 384,
+        "width": 304,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        128
+      ],
+      "id": "0700d617-5559-4f32-a279-acd882d319bc",
+      "name": "Sticky Note5"
+    }
+  ],
+  "pinData": {
+    "Form Trigger": [
+      {
+        "json": {
+          "Topic of Post": "How ai is changing the world",
+          "Target Audience": "tech community",
+          "submittedAt": "2026-09-28T07:42:52.376+05:00",
+          "formMode": "test"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "Social Media Post generate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Social Media Post generate",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Image prompt",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tavily": {
+      "ai_tool": [
+        [
+          {
+            "node": "Social Media Post generate",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Social Media Post generate": {
+      "main": [
+        [
+          {
+            "node": "Image prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image prompt": {
+      "main": [
+        [
+          {
+            "node": "LI image",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "insta img",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "insta img": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Linkedin post": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "FaceBook Post",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "insta post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LI image": {
+      "main": [
+        [
+          {
+            "node": "Linkedin post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "259e286b-27d6-4e2a-b130-aff3c1806b4c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c83081d9776451399fee324790f30b7689a709e5c57e6b02c2c3c315105c3b4d"
+  },
+  "nodeGroups": [],
+  "id": "lcFoAlb3shuRwNI4",
+  "tags": []
+}

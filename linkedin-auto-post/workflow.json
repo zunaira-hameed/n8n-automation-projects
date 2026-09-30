@@ -1,0 +1,345 @@
+{
+  "name": "linkedin auto",
+  "nodes": [
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        672,
+        208
+      ],
+      "id": "6c3f761f-b225-4d1a-8121-291385d337a0",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0f0138e6-a07c-4fa7-8607-b0104d4e38e6",
+      "name": "Daily Schedule"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_ID",
+          "mode": "list",
+          "cachedResultName": "linkedin auto",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/...."
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/...."
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "To do"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "f026b425-9d40-43e2-bb3f-4c81d1d3e319",
+      "name": "Get Pending Topic from Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": {{ JSON.stringify(\"Search the latest news on \" + $json.Topic) }},\n  \"search_depth\": \"basic\",\n  \"chunks_per_source\": 3,\n  \"max_results\": 1,\n  \"topic\": \"general\",\n  \"time_range\": null,\n  \"start_date\": \"2025-02-09\",\n  \"end_date\": \"2025-12-29\",\n  \"include_published_date\": false,\n  \"filter_by_published_date\": false,\n  \"include_answer\": false,\n  \"include_raw_content\": false,\n  \"include_images\": false,\n  \"include_image_descriptions\": false,\n  \"include_favicon\": false,\n  \"include_domains\": [],\n  \"exclude_domains\": [],\n  \"include_domains_mode\": null,\n  \"country\": null,\n  \"language\": \"en\",\n  \"filter_by_language\": false,\n  \"auto_parameters\": false,\n  \"exact_match\": false,\n  \"include_usage\": false,\n  \"safe_search\": false\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "d00c7e06-30fc-4871-a1fc-dd4873fe88af",
+      "name": "Search Topic on Tavily"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Article:  {{ $json.results[0].content }}",
+        "options": {
+          "systemMessage": "You are a content writer for a Data Science LinkedIn page. Your job is to take the latest news/search results provided about a given topic and turn them into a single, ready-to-publish LinkedIn post.\n\nRules for the post:\n1. Hook: Start with a strong first 1-2 lines that grab attention (a surprising fact, a bold statement, or a relevant question). This must work even if LinkedIn truncates the post after 2-3 lines.\n2. Body: Summarize the key news/insight in simple, clear language. Avoid heavy jargon. Explain why it matters to Data Science professionals, students, or businesses.\n3. Structure: Use short paragraphs (1-3 lines each) with line breaks for readability. No walls of text.\n4. Tone: Professional but conversational — write like a knowledgeable peer, not a press release.\n5. Length: Keep the post between 100-200 words.\n6. Ending: Close with a question or a call-to-action that invites comments (e.g., asking for opinions, experiences, or predictions).\n7. Hashtags: Add 3-5 relevant hashtags at the end (e.g., #DataScience #MachineLearning #AI).\n8. Do not fabricate facts. Only use information present in the provided search results/context.\n9. Do not include markdown formatting, asterisks, or headers — output plain text only, formatted the way a LinkedIn post would actually look.\n10. Output only the final post text. No explanations, no preamble.\n\nInput you will receive: A topic name and search results/news content about that topic.\nOutput: One complete, ready-to-post LinkedIn post following the rules above."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        672,
+        0
+      ],
+      "id": "fea7248b-66b7-4ed1-9105-3ee4f1184521",
+      "name": "Write LinkedIn Post",
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_ID",
+          "mode": "list",
+          "cachedResultName": "linkedin auto",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/...."
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/...."
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Topic": "={{ $('Get Pending Topic from Sheet').item.json.Topic }}",
+            "Status": "Created",
+            "Content": "={{ $json.output }}"
+          },
+          "matchingColumns": [
+            "Topic"
+          ],
+          "schema": [
+            {
+              "id": "Topic",
+              "displayName": "Topic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Content",
+              "displayName": "Content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "6eb274e3-2247-4ef4-9507-bce51fa69791",
+      "name": "Mark Topic as Posted",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "person": "y8xEQiRt9z",
+        "text": "={{ $('Write LinkedIn Post').item.json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        1264,
+        0
+      ],
+      "id": "ad0ba5b3-8a8e-4640-84ce-bd5e26fc7e43",
+      "name": "Publish to LinkedIn",
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "YOUR_ID",
+          "name": "LinkedIn account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "**LinkedIn AutoPilot**:\nAn n8n workflow that automatically researches trending topics from a Google Sheet, generates LinkedIn-ready posts with AI, and publishes them to LinkedIn on autopilot.",
+        "height": 496,
+        "width": 1504,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        -112
+      ],
+      "id": "6a5f3ea1-2856-4bf0-9f26-eb904591e02f",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Write LinkedIn Post",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Get Pending Topic from Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Pending Topic from Sheet": {
+      "main": [
+        [
+          {
+            "node": "Search Topic on Tavily",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Topic on Tavily": {
+      "main": [
+        [
+          {
+            "node": "Write LinkedIn Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write LinkedIn Post": {
+      "main": [
+        [
+          {
+            "node": "Mark Topic as Posted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Topic as Posted": {
+      "main": [
+        [
+          {
+            "node": "Publish to LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "7cff9fb5-b53a-4662-838c-f692bcefe15b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c83081d9776451399fee324790f30b7689a709e5c57e6b02c2c3c315105c3b4d"
+  },
+  "nodeGroups": [],
+  "id": "6xMijAxVAup4Xikw",
+  "tags": []
+}

@@ -1,0 +1,245 @@
+{
+  "name": "smart article",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Save for Later - Link Summarizer",
+        "formDescription": "Paste an article link and get an AI-generated summary.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Paste Article Link Here"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a1700bcc-93b8-4e2f-b6bf-3bf6f144fd35",
+      "name": "On form submission",
+      "webhookId": "YOUR_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json[\"Paste Article Link Here\"] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "e16c0476-9613-4286-9332-e390c02124ce",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "scraped_text",
+              "cssSelector": "body",
+              "skipSelectors": "script, style, nav, footer, header"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "b0ceaabd-e7d0-4780-84b9-50a089ba9f47",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Read the following web page text:\n\n{{ $json.scraped_text }}\n\nBreak it down into an easy-to-read summary.\n\nFormat your response exactly like this:\n\nKey Takeaway: (1 sentence)\n\nTop 3 Bullet Points:\n- (short fragment)\n- (short fragment)\n- (short fragment)\n\nDo not include any introductory text or conversation.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "55372411-91f8-47cd-97d7-df8bfe816fa5",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        624,
+        224
+      ],
+      "id": "4783044f-741a-4c79-9367-24e9bcaa050c",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "YOUR_ID",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_VALUE",
+          "mode": "list",
+          "cachedResultName": "Save for Later Articles",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/...."
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/...."
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now }}",
+            "Original Link": "={{ $('On form submission').item.json['Paste Article Link Here'] }}",
+            "AI Summary": "={{ $('AI Agent').item.json.output }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Original Link",
+              "displayName": "Original Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AI Summary",
+              "displayName": "AI Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        976,
+        0
+      ],
+      "id": "a40a167f-1d0c-42f2-87ad-9c46fab9ada3",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "58edc96f-b42a-4a24-a487-f67e3e982ac8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8f9b2c7ad1552f954fe1276f30a57f2b528b50f740c0a2fcd5d764f46afeb924"
+  },
+  "nodeGroups": [],
+  "id": "JmDHHPY7n0lxjPxP",
+  "tags": []
+}

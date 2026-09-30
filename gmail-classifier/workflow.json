@@ -1,0 +1,415 @@
+{
+  "name": "gmail zunairamughal",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "labelIds": [
+            "INBOX"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "34e3499d-13a1-4b49-a25e-b360047fa5e2",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_ID",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.Subject }}, {{ $json.snippet }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Indeed",
+              "description": "Any email sent by Indeed or related to Indeed activity, including job alerts, recommended jobs, application updates, employer messages, interview notifications, saved-search alerts, and other Indeed notifications."
+            },
+            {
+              "category": "Promotional",
+              "description": "Emails that promote products, services, discounts, sales, special offers, deals, advertisements, marketing campaigns, or commercial promotions."
+            },
+            {
+              "category": "Job/Internship Selection",
+              "description": "Emails that confirm the recipient has been selected, shortlisted, hired, accepted, or offered a job or internship position, including interview selection or employment offers."
+            },
+            {
+              "category": "Job/Internship Rejected",
+              "description": "Emails that inform the recipient that they were not selected, rejected, unsuccessful, or not chosen for a job, internship, interview, or employment opportunity."
+            },
+            {
+              "category": "Newsletter",
+              "description": "Emails containing regular news, updates, articles, announcements, tips, educational content, or other informational content sent periodically by a company, website, organization, or service."
+            },
+            {
+              "category": "Google",
+              "description": "Any email sent by Google or any of its Google services, including Google Account, Google Drive, Google Docs, Google Photos, Google Calendar, Google Play, YouTube, Google Search, security alerts, account notifications, and other official Google communications."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "5d2d73dc-4eb3-4e7b-8c9a-de4cdbab238b",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        320
+      ],
+      "id": "5dd4f12d-1234-4be5-8841-d0aa6e169bf0",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "YOUR_ID",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "LABEL_ID"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        608,
+        -112
+      ],
+      "id": "17f62946-c0d8-48ee-b0ce-71683f7f649b",
+      "name": "Promotional",
+      "webhookId": "YOUR_WEBHOOK_ID",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_ID",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "LABEL_ID"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        608,
+        -288
+      ],
+      "id": "515ca87e-0d8c-43b2-985d-a220b0cb9eb8",
+      "name": "Indeed",
+      "webhookId": "YOUR_WEBHOOK_ID",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_ID",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "LABEL_ID"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        608,
+        48
+      ],
+      "id": "bfc956d2-1fb0-480c-8308-9cc7c33057d0",
+      "name": "Job/Internship Selection",
+      "webhookId": "YOUR_WEBHOOK_ID",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_ID",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "LABEL_ID"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        624,
+        208
+      ],
+      "id": "8d5b81d5-7c5b-4f8b-824a-21bf67e866df",
+      "name": "Job/Internship Rejected",
+      "webhookId": "YOUR_WEBHOOK_ID",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_ID",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "LABEL_ID"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        624,
+        352
+      ],
+      "id": "ea9d06ea-fade-49da-861d-9935b891707b",
+      "name": "Newsletter",
+      "webhookId": "YOUR_WEBHOOK_ID",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_ID",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "removeLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "INBOX"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        32
+      ],
+      "id": "4e1fc175-912c-448e-b096-193cf0467a39",
+      "name": "Remove label from message",
+      "webhookId": "YOUR_WEBHOOK_ID",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_ID",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "LABEL_ID"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        640,
+        528
+      ],
+      "id": "bcbfac65-5742-4189-be21-7ba79babb9e9",
+      "name": "Google",
+      "webhookId": "YOUR_WEBHOOK_ID",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_ID",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "Indeed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Promotional",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Job/Internship Selection",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Job/Internship Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Newsletter",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Google",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Indeed": {
+      "main": [
+        [
+          {
+            "node": "Remove label from message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Promotional": {
+      "main": [
+        [
+          {
+            "node": "Remove label from message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Job/Internship Selection": {
+      "main": [
+        [
+          {
+            "node": "Remove label from message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Job/Internship Rejected": {
+      "main": [
+        [
+          {
+            "node": "Remove label from message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Newsletter": {
+      "main": [
+        [
+          {
+            "node": "Remove label from message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google": {
+      "main": [
+        [
+          {
+            "node": "Remove label from message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "59ae5d2d-a10e-4e35-a372-35e4ed969775",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8f9b2c7ad1552f954fe1276f30a57f2b528b50f740c0a2fcd5d764f46afeb924"
+  },
+  "nodeGroups": [],
+  "id": "YN5gJG6XNcSpGVy0",
+  "tags": []
+}

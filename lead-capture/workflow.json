@@ -1,0 +1,467 @@
+{
+  "name": "Lead Capture & Google Sheets Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6946234d-6e7a-4720-8548-2fde7600358a",
+              "name": "name",
+              "value": "={{ $json.Name }}",
+              "type": "string"
+            },
+            {
+              "id": "9a32c02a-9625-4939-b9f9-7485c261b3b9",
+              "name": "email",
+              "value": "={{ $json.Email }}",
+              "type": "string"
+            },
+            {
+              "id": "28214607-4a1b-4abf-8c5a-ce4bba0c433f",
+              "name": "message",
+              "value": "={{ $json.Message }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        672,
+        0
+      ],
+      "id": "eaf533b5-b293-47a0-987e-042e6ff43ba2",
+      "name": "Format Lead Data"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_ID",
+          "mode": "list",
+          "cachedResultName": "Lead Capture",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/...."
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/...."
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $('Validate Lead').item.json.name }}",
+            "Email": "={{ $('Validate Lead').item.json.email }}",
+            "Message": "={{ $('Validate Lead').item.json.message }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1840,
+        16
+      ],
+      "id": "90eaa6df-1a7b-4f90-a46d-3ced73505128",
+      "name": "Save Lead",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ab8ba77c-a47a-4fa7-afd2-cb8c681fd545",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        848,
+        0
+      ],
+      "id": "681e73b3-c254-4278-9266-93acc191f23d",
+      "name": "Validate Lead"
+    },
+    {
+      "parameters": {
+        "formTitle": "Lead Capture Form",
+        "formDescription": "Please fill in your details and we'll get back to you.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Message",
+              "fieldType": "textarea",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        416,
+        0
+      ],
+      "id": "f084b9b7-34f7-4c3c-89c6-3b5d28ce2580",
+      "name": "Lead Form",
+      "webhookId": "YOUR_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a lead qualification assistant.\n\nAnalyze the customer message and classify the lead.\n\nReturn ONLY this format:\n\nLead Type: Hot / Warm / Cold\nIntent: one short sentence\nReason: one short sentence\n\nCustomer Name: {{ $('Lead Form').item.json.Name }}\nCustomer Email: {{ $('Lead Form').item.json.Email }}\nCustomer Message: {{ $('Lead Form').item.json.Message }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1520,
+        16
+      ],
+      "id": "a06691eb-be92-43c2-b193-2ce888b1fe9b",
+      "name": "AI Lead Classifier"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1520,
+        192
+      ],
+      "id": "04e19c82-b1ad-47a0-96b7-fe53cb0ae25a",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "YOUR_ID",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3eac3460-2682-4499-bbdd-227c06178c60",
+              "leftValue": "={{ $json.Message }}",
+              "rightValue": "pricing",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2080,
+        16
+      ],
+      "id": "cc723d16-e7c6-4d92-9430-d19a4a78924e",
+      "name": "Hot Lead"
+    },
+    {
+      "parameters": {
+        "sendTo": "youremail@gmail.com",
+        "subject": "=🔥 Hot Lead Alert - {{ $json[\"Name\"] }}",
+        "emailType": "text",
+        "message": "=🔥 HOT LEAD ALERT  A new hot lead has been detected.  Name: {{ $json[\"Name\"] }} Email: {{ $json[\"Email\"] }}  Message: {{ $json[\"Message\"] }}  Lead Type: {{ $json[\"Lead Type\"] }}  Please follow up with this lead as soon as possible.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2304,
+        -96
+      ],
+      "id": "604dff42-2aea-492c-bf0d-ba2fa9a213dc",
+      "name": "Notify Sales Team",
+      "webhookId": "YOUR_WEBHOOK_ID",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_ID",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "02f901ca-644c-46bd-887d-fdea58843b5c",
+              "leftValue": "={{ $json.Email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1296,
+        -96
+      ],
+      "id": "dbc1d06d-43b8-4521-9d06-a55a320bce5d",
+      "name": "Duplicate Lead?"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_ID",
+          "mode": "list",
+          "cachedResultName": "Lead Capture",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/...."
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/...."
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Email",
+              "lookupValue": "={{ $('Format Lead Data').item.json.Email }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1072,
+        -96
+      ],
+      "id": "60afd29c-8546-4602-bcee-87d2b5d985f2",
+      "name": "Check existing lead",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Format Lead Data": {
+      "main": [
+        [
+          {
+            "node": "Validate Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Lead": {
+      "main": [
+        [
+          {
+            "node": "Hot Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Lead": {
+      "main": [
+        [
+          {
+            "node": "Check existing lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Lead Form": {
+      "main": [
+        [
+          {
+            "node": "Format Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Lead Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Lead Classifier": {
+      "main": [
+        [
+          {
+            "node": "Save Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hot Lead": {
+      "main": [
+        [
+          {
+            "node": "Notify Sales Team",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Check existing lead": {
+      "main": [
+        [
+          {
+            "node": "Duplicate Lead?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Duplicate Lead?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "AI Lead Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "12f2cdbf-3c66-41bb-8ad1-749fc5503e84",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9e4b58348d1018d3ccd7b213e2a4a50233553b7e20efb9cab855de7654982023"
+  },
+  "nodeGroups": [],
+  "id": "FfOOSsN6hJBnVnzc",
+  "tags": []
+}

@@ -1,0 +1,660 @@
+{
+  "name": "Invoice Parser",
+  "nodes": [
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        624,
+        208
+      ],
+      "id": "4e241831-0146-4936-9505-2c06d70399d1",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "First wokflow will get invoice from client using form.",
+        "height": 272,
+        "width": 1200
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        256,
+        -352
+      ],
+      "id": "de05de0b-55c0-4ee2-b454-4b5158e60638",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "while 2nd workflow will convert invoice  into a message and send to email.",
+        "height": 352,
+        "width": 1920,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        -32
+      ],
+      "id": "f68eb3b1-be8b-4e29-9ed9-dd5795fc5134",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "formTitle": "Invoice Parser",
+        "formDescription": "Fill out this form.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Invoice Number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Sender Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Sender Email",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Sender Address",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Total Amount",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Invoice Date",
+              "fieldType": "date",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Due Date",
+              "fieldType": "date",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        496,
+        -272
+      ],
+      "id": "e6b04b04-f6cc-4453-9116-6a05c9123f5a",
+      "name": "Client Invoice Form",
+      "webhookId": "YOUR_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Form Trigger se data uthao\nconst invoiceNumber = $json['Invoice Number'];\nconst senderName    = $json['Sender Name'];\nconst senderEmail   = $json['Sender Email'];\nconst senderAddress = $json['Sender Address'];\nconst totalAmount   = $json['Total Amount'];\nconst invoiceDate   = $json['Invoice Date'];\nconst dueDate       = $json['Due Date'];\n\n// Amount ko formatted currency banao\nconst formattedAmount = Number(totalAmount).toLocaleString('en-US', {\n  minimumFractionDigits: 2,\n  maximumFractionDigits: 2\n});\n\nconst html = `\n<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\">\n<style>\n  body {\n    font-family: Arial, Helvetica, sans-serif;\n    color: #2b2b2b;\n    margin: 0;\n    padding: 40px;\n  }\n  .invoice-box {\n    max-width: 800px;\n    margin: auto;\n  }\n  h1 {\n    font-size: 32px;\n    color: #23324D;\n    margin-bottom: 4px;\n  }\n  .subtitle {\n    color: #888;\n    font-size: 13px;\n    margin-bottom: 30px;\n  }\n  .top-section {\n    display: flex;\n    justify-content: space-between;\n    margin-bottom: 30px;\n  }\n  .sender-info, .invoice-meta {\n    font-size: 14px;\n    line-height: 1.6;\n  }\n  .invoice-meta {\n    text-align: right;\n  }\n  .invoice-meta strong {\n    color: #23324D;\n  }\n  table {\n    width: 100%;\n    border-collapse: collapse;\n    margin-top: 20px;\n  }\n  th {\n    background-color: #23324D;\n    color: #ffffff;\n    text-align: left;\n    padding: 10px 14px;\n    font-size: 14px;\n  }\n  td {\n    padding: 14px;\n    font-size: 14px;\n    border-bottom: 1px solid #e0e0e0;\n  }\n  .amount-cell {\n    text-align: right;\n    font-weight: bold;\n    color: #23324D;\n  }\n  .total-row td {\n    font-size: 18px;\n    font-weight: bold;\n    border-top: 2px solid #23324D;\n    border-bottom: none;\n  }\n  .footer {\n    margin-top: 40px;\n    font-size: 12px;\n    color: #999;\n    text-align: center;\n  }\n</style>\n</head>\n<body>\n  <div class=\"invoice-box\">\n    <h1>INVOICE</h1>\n    <div class=\"subtitle\">Invoice #${invoiceNumber}</div>\n\n    <div class=\"top-section\">\n      <div class=\"sender-info\">\n        <strong>${senderName}</strong><br>\n        ${senderAddress}<br>\n        ${senderEmail}\n      </div>\n      <div class=\"invoice-meta\">\n        <div><strong>Invoice Date:</strong> ${invoiceDate}</div>\n        <div><strong>Due Date:</strong> ${dueDate}</div>\n        <div><strong>Invoice #:</strong> ${invoiceNumber}</div>\n      </div>\n    </div>\n\n    <table>\n      <thead>\n        <tr>\n          <th>Description</th>\n          <th style=\"text-align:right;\">Amount</th>\n        </tr>\n      </thead>\n      <tbody>\n        <tr>\n          <td>Invoice submitted by ${senderName}</td>\n          <td class=\"amount-cell\">$${formattedAmount}</td>\n        </tr>\n        <tr class=\"total-row\">\n          <td>Total Due</td>\n          <td class=\"amount-cell\">$${formattedAmount}</td>\n        </tr>\n      </tbody>\n    </table>\n\n    <div class=\"footer\">\n      Generated automatically via n8n &mdash; Thank you!\n    </div>\n  </div>\n</body>\n</html>\n`;\n\nreturn [{ json: { html, invoiceNumber, senderName } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        -272
+      ],
+      "id": "605b08a2-c71e-4cfb-b304-324fcb7ca23d",
+      "name": "Prepare Invoice HTML"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.pdfshift.io/v3/convert/pdf",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "YOUR_ID"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"source\": {{ JSON.stringify($json.html) }} }",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        896,
+        -272
+      ],
+      "id": "10e34d4b-6bf7-4ae2-8c88-9fe76a478852",
+      "name": "Convert to PDF (PDFShift)"
+    },
+    {
+      "parameters": {
+        "name": "=Invoice-{{ $('Prepare Invoice HTML').item.json.invoiceNumber }}.pdf",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "YOUR_ID",
+          "mode": "list",
+          "cachedResultName": "Invoice Parser",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/...."
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1104,
+        -272
+      ],
+      "id": "e451c7ed-e3a8-4c32-9c60-667b622745f6",
+      "name": "Upload Invoice to Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "YOUR_ID",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "YOUR_ID",
+          "mode": "list",
+          "cachedResultName": "Invoice Parser",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/...."
+        },
+        "event": "fileCreated",
+        "options": {
+          "fileType": "all"
+        }
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        48
+      ],
+      "id": "e18686b1-5fa7-4ae9-ba7e-78ea9359c3b0",
+      "name": "New Invoice in Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "YOUR_ID",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        224,
+        48
+      ],
+      "id": "6f1a90d6-f646-4189-b5b3-b5471067121e",
+      "name": "Download Invoice PDF",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "YOUR_ID",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        48
+      ],
+      "id": "58b43b22-f68d-4d8a-8950-83a3565ba942",
+      "name": "Extract Text from PDF"
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.text }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "Invoice Number",
+              "description": "Contains the Invoice Number",
+              "required": true
+            },
+            {
+              "name": "Sender Name",
+              "description": "The name of sender",
+              "required": true
+            },
+            {
+              "name": "Sender Email",
+              "description": "The sender email",
+              "required": true
+            },
+            {
+              "name": "Sender Address",
+              "description": "The address of the sender",
+              "required": true
+            },
+            {
+              "name": "Total Amount",
+              "description": "The total amount of the invoice",
+              "required": true
+            },
+            {
+              "name": "Invoice Date",
+              "type": "date",
+              "description": "The date, the invoice is sent",
+              "required": true
+            },
+            {
+              "name": "Due Date",
+              "type": "date",
+              "description": "The date, invoice was due",
+              "required": true
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "You are an expert extraction algorithm.\n\nOnly extract relevant information from the text below.\n\nIf you are unsure of the value of an attribute, omit that attribute from the output rather than guessing."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        624,
+        48
+      ],
+      "id": "83ccc878-5abc-4c0b-a9fc-fea400030f8e",
+      "name": "Extract Invoice Details"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_ID",
+          "mode": "list",
+          "cachedResultName": "Invoice Parser",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/...."
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/...."
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Invoice Number": "={{ $json.output['Invoice Number'] }}",
+            "Sender Name": "={{ $json.output['Sender Name'] }}",
+            "Sender Email": "={{ $json.output['Sender Email'] }}",
+            "Sender Address": "={{ $json.output['Sender Address'] }}",
+            "Total Amount": "={{ $json.output['Total Amount'] }}",
+            "Invoice Date": "={{ $json.output['Invoice Date'] }}",
+            "Due Date": "={{ $json.output['Due Date'] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Invoice Number",
+              "displayName": "Invoice Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Sender Name",
+              "displayName": "Sender Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Sender Email",
+              "displayName": "Sender Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Sender Address",
+              "displayName": "Sender Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Total Amount",
+              "displayName": "Total Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Invoice Date",
+              "displayName": "Invoice Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Due Date",
+              "displayName": "Due Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        960,
+        48
+      ],
+      "id": "66bf9f95-7d33-4d54-8b4c-d76a34ddedf9",
+      "name": "Save Invoice to Google Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=Invoice Number:  {{ $json['Invoice Number'] }}\nSender Name: {{ $json['Sender Name'] }}\nSender Email: {{ $json['Sender Email'] }}\nSender Address: {{ $json['Sender Address'] }}\nTotal Amount: {{ $json['Total Amount'] }}\nInvoice Date: {{ $json['Invoice Date'] }}\nDue Date: {{ $json['Due Date'] }}"
+            },
+            {
+              "role": "system",
+              "content": "You are Alexa, the designated email expert for .... Your responsibility is to professionally notify the .... billing team upon receipt of a new invoice.\n\n📧 Email Task\nUpon receiving invoice details, compose a clear and concise email to the billing team that includes:\n\n- Confirmation that a new invoice has been received.\n- Notification that the invoice has been recorded in the Invoice Database.\n- A direct link to the updated spreadsheet for reference:\nhttps://docs.google.com/spreadsheets/...."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1168,
+        48
+      ],
+      "id": "f5969e57-1033-4da9-95b5-133761764dd8",
+      "name": "Write Email Message",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const parsed = JSON.parse($input.first().json.output[0].content[0].text);\n\nreturn {\n  subject: parsed.subject,\n  email: parsed.email\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1488,
+        48
+      ],
+      "id": "d16773cd-081b-4502-a128-454f634d8cb9",
+      "name": "Format Email Body"
+    },
+    {
+      "parameters": {
+        "sendTo": "youremail@gmail.com",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.email }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1680,
+        48
+      ],
+      "id": "6c71e77a-d3af-42ab-855f-c0da2163d6d9",
+      "name": "Send Invoice Email (Gmail)",
+      "webhookId": "YOUR_WEBHOOK_ID",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_ID",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Extract Invoice Details",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Client Invoice Form": {
+      "main": [
+        [
+          {
+            "node": "Prepare Invoice HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Invoice HTML": {
+      "main": [
+        [
+          {
+            "node": "Convert to PDF (PDFShift)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to PDF (PDFShift)": {
+      "main": [
+        [
+          {
+            "node": "Upload Invoice to Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Invoice in Drive": {
+      "main": [
+        [
+          {
+            "node": "Download Invoice PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Invoice PDF": {
+      "main": [
+        [
+          {
+            "node": "Extract Text from PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Text from PDF": {
+      "main": [
+        [
+          {
+            "node": "Extract Invoice Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Invoice Details": {
+      "main": [
+        [
+          {
+            "node": "Save Invoice to Google Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Invoice to Google Sheet": {
+      "main": [
+        [
+          {
+            "node": "Write Email Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Email Message": {
+      "main": [
+        [
+          {
+            "node": "Format Email Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Email Body": {
+      "main": [
+        [
+          {
+            "node": "Send Invoice Email (Gmail)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "575b4b0b-b539-4028-ba47-6edc2aab8256",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c83081d9776451399fee324790f30b7689a709e5c57e6b02c2c3c315105c3b4d"
+  },
+  "nodeGroups": [],
+  "id": "7rcUrWshTFkm5nVI",
+  "tags": []
+}

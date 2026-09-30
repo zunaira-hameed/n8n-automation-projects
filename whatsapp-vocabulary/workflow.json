@@ -1,0 +1,361 @@
+{
+  "name": "Whatsapp Vocabulary",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "6999ea77-535a-499b-af46-f24c3a0b8475",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_KEY",
+          "mode": "list",
+          "cachedResultName": "vocab flashcard",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/...."
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/...."
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "e2c1297c-44ef-4f0f-9b74-a460aa35ed1c",
+      "name": "Get row(s) in sheet",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_OAUTH_API_KEY",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Generate today's a new vocabulary word.\n\nFirst check the Google Sheet for previously used words.\nDo not use any word that is already present in the sheet.\n\nReturn exactly 1 new word with:\nWord, Meaning, Example, Synonym, Date, Pronunciation.",
+        "options": {
+          "systemMessage": "You are a Daily English Vocabulary Assistant.\n\nGenerate exactly 1 useful intermediate-level English vocabulary word every day.\n\nThe Google Sheet contains previously used words in the \"Word\" column.\nBefore generating new words, check the Google Sheet and NEVER repeat a word that already exists there.\n\nThe new word must be unique.\n\nFor each word provide:\n- Word\n- Meaning\n- Example\n- Synonym\n- Date\n- Pronunciation\n\nAlways use the current date."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "ef33e2ba-a962-4209-8f5d-bbc571d28cef",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        160
+      ],
+      "id": "fe631333-2750-4e9e-af98-2f48037631d6",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "YOUR_API_KEY",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $json.output;\n\nconst word = text.match(/\\*\\*Word:\\*\\*\\s*(.*)/)?.[1]?.trim();\nconst meaning = text.match(/\\*\\*Meaning:\\*\\*\\s*(.*)/)?.[1]?.trim();\nconst example = text.match(/\\*\\*Example:\\*\\*\\s*(.*)/)?.[1]?.trim();\nconst synonym = text.match(/\\*\\*Synonym:\\*\\*\\s*(.*)/)?.[1]?.trim();\nconst date = text.match(/\\*\\*Date:\\*\\*\\s*(.*)/)?.[1]?.trim();\nconst pronunciation = text.match(/\\*\\*Pronunciation:\\*\\*\\s*(.*)/)?.[1]?.trim();\n\nreturn [{\n  json: {\n    Word: word,\n    Meaning: meaning,\n    Example: example,\n    Synonym: synonym,\n    Date: date,\n    Pronunciation: pronunciation\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        768,
+        0
+      ],
+      "id": "3a180db0-ffc4-488e-8408-730abc8d4478",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "YOUR_PHONE_NUMBER",
+        "template": "daily_vocabulary|en",
+        "components": {
+          "component": [
+            {
+              "bodyParameters": {
+                "parameter": [
+                  {
+                    "text": "={{$json.Word}}"
+                  },
+                  {
+                    "text": "={{$json.Meaning}}"
+                  },
+                  {
+                    "text": "={{$json.Example}}"
+                  },
+                  {
+                    "text": "={{$json.Synonym}}"
+                  },
+                  {
+                    "text": "={{$json.Date}}"
+                  },
+                  {
+                    "text": "={{$json.Pronunciation}}"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        1168,
+        0
+      ],
+      "id": "8367d159-0bc2-4a18-9e62-04831984296d",
+      "name": "Send template",
+      "webhookId": "YOUR_WEBHOOK_ID",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "YOUR_WHATSAPP_API_KEY",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_KEY",
+          "mode": "list",
+          "cachedResultName": "vocab flashcard",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/...."
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/...."
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Word": "={{ $json.Word }}",
+            "Meaning": "={{ $json.Meaning }}",
+            "Example": "={{ $json.Example }}",
+            "Synonym": "={{ $json.Synonym }}",
+            "Date": "={{ $json.Date }}",
+            "Pronunciation": "={{ $json.Pronunciation }}"
+          },
+          "matchingColumns": [
+            "Word"
+          ],
+          "schema": [
+            {
+              "id": "Word",
+              "displayName": "Word",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Meaning",
+              "displayName": "Meaning",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Example",
+              "displayName": "Example",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Synonym",
+              "displayName": "Synonym",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Pronunciation",
+              "displayName": "Pronunciation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "output",
+              "displayName": "output",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        944,
+        0
+      ],
+      "id": "65c2b955-62e6-47a8-84e5-54866a002bd1",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_SHEET_KEY",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "f50b1b36-cf3b-4b02-a98c-306f71c9b01a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9e4b58348d1018d3ccd7b213e2a4a50233553b7e20efb9cab855de7654982023"
+  },
+  "nodeGroups": [],
+  "id": "gFwfklJgQLpkmbxy",
+  "tags": []
+}

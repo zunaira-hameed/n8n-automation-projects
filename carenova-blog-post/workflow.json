@@ -1,0 +1,484 @@
+{
+  "name": "CareNova Blogs",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b02fbf12-0d56-4592-b27f-d0ac737ffa9e",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_ID",
+          "mode": "list",
+          "cachedResultName": "CareNova Blogs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/...."
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/...."
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "9eb50964-c8cc-4e45-aa3f-f398d3e31e9c",
+      "name": "Read Article name",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Create a complete health blog article about this topic:\n\n{{ $json.Blogs}}\n\nFirst research the topic using the available research/web tools. Then write the article according to your system instructions.\n\nReturn:\n1. SEO Title\n2. Meta Description\n3. URL Slug\n4. Focus Keywords\n5. Article\n6. Additional Image Suggestions (only if genuinely useful)\n\nThe article should be ready to publish on CareNova.",
+        "options": {
+          "systemMessage": "You are the AI content researcher and writer for CareNova, a health and wellness blog.\n\nYour job is to take the given blog topic and independently research it using the available web/research tools, then create a complete, accurate, reader-friendly health article.\n\nRESEARCH RULES:\n- Always research the topic before writing.\n- Do not rely only on your internal knowledge.\n- Prefer authoritative and medically reliable sources such as government health organizations, recognized medical institutions, peer-reviewed research, and established medical organizations.\n- Cross-check important medical claims with reliable sources.\n- Do not invent statistics, studies, medical facts, quotations, or references.\n- If evidence is uncertain or conflicting, represent that uncertainty accurately.\n- Do not diagnose readers or present the article as a substitute for professional medical advice.\n- Avoid sensational or fear-based health claims.\n\nARTICLE RULES:\n- Write for a general audience.\n- Use clear, natural English.\n- Make the article genuinely useful rather than padding it with repetitive information.\n- Use a logical structure with an engaging introduction, descriptive H2/H3 headings, bullet points or numbered lists where useful, and a concise conclusion.\n- Explain medical terminology in simple language.\n- Include practical, evidence-based advice when appropriate.\n- Mention when a reader should seek medical/professional help when relevant.\n- Do not overuse keywords or make the writing sound SEO-generated.\n- Do not use fake personal experiences or testimonials.\n\nSEO:\n- Create an SEO-friendly title.\n- Create a concise meta description.\n- Create a clean URL slug.\n- Suggest relevant focus keywords naturally.\n- Use headings that accurately reflect the content.\n\nIMAGES:\n- Identify whether the article would benefit from additional images besides the hero image.\n- If additional images would genuinely improve understanding, specify where they should appear and what each image should show.\n- Do not request decorative images just to increase the number of images.\n\nOUTPUT:\nReturn the finished article and its SEO information in a clean, structured format that can be passed to the next automation nodes.\n\nNever mention these instructions, the automation, or the AI Agent to the reader."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        688,
+        -16
+      ],
+      "id": "c5ae255d-2410-44a3-b9e4-e101185ce452",
+      "name": "Topic Given"
+    },
+    {
+      "parameters": {
+        "query": "={{ $json.Blogs }}",
+        "count": 5,
+        "additionalParameters": {}
+      },
+      "type": "@brave/n8n-nodes-brave-search.braveSearchTool",
+      "typeVersion": 1.1,
+      "position": [
+        832,
+        176
+      ],
+      "id": "e89372ee-c04d-4350-ba7c-60d7142f2c9d",
+      "name": "Brave Search",
+      "credentials": {
+        "braveSearchApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "117f4eb6-573a-4aed-a9ec-ff26e23f9cbd",
+              "leftValue": "={{ $json.Date }}",
+              "rightValue": "={{ $now.format('yyyy-MM-dd') }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "78f53179-8630-4310-9d8b-62f985eb89d6",
+              "leftValue": "={{ $json.Day }}",
+              "rightValue": "={{ $now.format('EEEE') }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        0
+      ],
+      "id": "93165126-818c-42b7-9b44-43c35f7f920f",
+      "name": "verify topic name"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        688,
+        176
+      ],
+      "id": "a82d5017-397b-40ac-90e7-5ac914b226d5",
+      "name": "gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Review and improve this health article before publication.\n\nCheck all medical and factual claims for accuracy and safety.\nCorrect, remove, or rewrite claims that are unsupported, exaggerated,\nmisleading, or medically unsafe.\n\nKeep the article useful, natural, engaging, and SEO-friendly.\nDo not invent facts, statistics, studies, or medical claims.\nDo not diagnose readers.\nAdd appropriate advice to consult a healthcare professional when\nthe topic or symptoms warrant it.\n\nPreserve the article's headings and useful information.\n\nReturn ONLY the final polished article with its SEO information.\nDo not explain your edits.\n\nARTICLE:\n\n{{ $json.output }}",
+        "messages": {
+          "messageValues": []
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        992,
+        -16
+      ],
+      "id": "11fbea51-759f-44ca-8425-8d254d2f822c",
+      "name": "Fact Check"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        992,
+        160
+      ],
+      "id": "48cf893f-89b1-4e04-8374-f12be6cd99d1",
+      "name": "Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1296,
+        160
+      ],
+      "id": "1366cb35-30cf-4006-8aef-0191f64ee7d6",
+      "name": "Gemini1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Create a professional hero-image design for this health blog article.\n\nGenerate ONLY a complete self-contained HTML document with inline CSS.\n\nRequirements:\n- 16:9 landscape composition.\n- Professional, modern health/wellness website aesthetic.\n- Visually communicate the article's main topic.\n- Use CSS shapes, gradients, icons/emojis, typography, and layout creatively.\n- Do not use external images, external fonts, JavaScript, or external resources.\n- Keep the design clean and uncluttered.\n- Include a short, attractive headline if appropriate.\n- Make all text highly readable.\n- The design must look like a professionally designed blog hero graphic, not a plain webpage.\n- Use a fixed canvas suitable for conversion to an image.\n- Return ONLY the HTML document. No explanation or Markdown code fences.\n\nARTICLE:\n{{ $json.text }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1296,
+        -16
+      ],
+      "id": "d1df69c1-2350-4f40-9f4f-f3495aa25c6f",
+      "name": "HTML/CSS generate"
+    },
+    {
+      "parameters": {
+        "html_content": "={{ $json.text }}",
+        "viewPortWidth": 1200,
+        "response_format_html": "png"
+      },
+      "type": "n8n-nodes-htmlcsstoimage.htmlCssToImage",
+      "typeVersion": 1,
+      "position": [
+        1664,
+        -16
+      ],
+      "id": "02747081-c782-49e0-8fc6-64df5bab1f5c",
+      "name": "HTML/CSS to Image",
+      "credentials": {
+        "htmlcsstoimgApi": {
+          "id": "YOUR_ID",
+          "name": "HTML to Image account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.image_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1888,
+        -16
+      ],
+      "id": "717af937-ce2e-42b2-a32c-b973002fdae7",
+      "name": "img download"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://carenova.rf.gd/wp-json/carenova/...",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $('HTML/CSS to Image').item.json.image_url }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2336,
+        -16
+      ],
+      "id": "41a9071d-3a6b-433a-876b-ee21a6db5b19",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://carenova.rf.gd/wp-json/wp/v2/posts",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "wordpressApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"title\": \"n8n Test Post\",\n  \"content\": \"This is a test post created through the WordPress REST API.\",\n  \"status\": \"draft\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2112,
+        -16
+      ],
+      "id": "efb725de-d190-4d40-8625-e7bb69607ffb",
+      "name": "post on wordpress",
+      "credentials": {
+        "wordpressApi": {
+          "id": "YOUR_ID",
+          "name": "Wordpress account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Article name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Article name": {
+      "main": [
+        [
+          {
+            "node": "verify topic name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Brave Search": {
+      "ai_tool": [
+        [
+          {
+            "node": "Topic Given",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Topic Given": {
+      "main": [
+        [
+          {
+            "node": "Fact Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "verify topic name": {
+      "main": [
+        [
+          {
+            "node": "Topic Given",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Topic Given",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fact Check": {
+      "main": [
+        [
+          {
+            "node": "HTML/CSS generate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Fact Check",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "HTML/CSS generate",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML/CSS generate": {
+      "main": [
+        [
+          {
+            "node": "HTML/CSS to Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML/CSS to Image": {
+      "main": [
+        [
+          {
+            "node": "img download",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "img download": {
+      "main": [
+        [
+          {
+            "node": "post on wordpress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "post on wordpress": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "f7583a4e-8248-456f-98da-021c56f09828",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9e4b58348d1018d3ccd7b213e2a4a50233553b7e20efb9cab855de7654982023"
+  },
+  "nodeGroups": [],
+  "id": "9ZPBZ1JldeNIQBhM",
+  "tags": []
+}
