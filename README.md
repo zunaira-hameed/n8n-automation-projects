@@ -36,4 +36,6 @@ n8n · OpenAI / LLMs · Google Sheets · Gmail · WhatsApp API · Webhooks · RE
 ## Connect With Me
 
 - GitHub: [zunaira-hameed](https://github.com/zunaira-hameed)
+- Portfolio: https://zunaira-hameed.github.io/zunairahameedportfolio/
+- LinkedIn: https://www.linkedin.com/in/zunaira-hameed/
 - Email: zunairamughal47@gmail.com
